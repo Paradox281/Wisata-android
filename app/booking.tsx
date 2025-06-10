@@ -9,7 +9,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { Alert, Linking, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 
 const COLORS = {
   primary: '#6366f1',
@@ -135,7 +135,7 @@ export default function BookingScreen() {
 
   const calculateTotalPrice = () => {
     if (!destination || !formData.total_persons) return 0;
-    const price = destination.hargaDiskon || destination.harga;
+  const price = destination.harga - destination.hargaDiskon;
     return price * parseInt(formData.total_persons);
   };
 
@@ -182,7 +182,7 @@ export default function BookingScreen() {
         package_id: destination?.id || parseInt(id as string),
         user_id: user.id,
         total_persons: parseInt(formData.total_persons),
-        status: 'pending',
+        status: 'PENDING',
         departure_date: formData.departure_date.toISOString(),
         return_date: formData.return_date.toISOString(),
         participants: formData.participants.map(p => ({
@@ -232,7 +232,7 @@ export default function BookingScreen() {
                 <ThemedText style={styles.destinationLocation}>{destination?.lokasi}</ThemedText>
               </ThemedView>
               <ThemedText style={styles.destinationPrice}>
-                Rp {(destination?.hargaDiskon || destination?.harga || 0).toLocaleString('id-ID')}
+              Rp {(destination.harga - destination.hargaDiskon).toLocaleString('id-ID')}
               </ThemedText>
             </ThemedView>
           </ThemedView>
@@ -368,8 +368,20 @@ export default function BookingScreen() {
       >
         <ThemedView style={styles.modalContainer}>
           <ThemedView style={styles.modalContent}>
+          <TouchableOpacity 
+            onPress={() => {
+              const phoneNumber = '6282287338654'; // Ganti dengan nomor WA Anda
+              const message = 'Halo, saya sudah memesan paket wisata melalui aplikasi. Mohon informasi untuk melanjutkan pembayaran. Terima kasih.';
+              const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+              Linking.openURL(url);
+            }}
+            style={styles.whatsappButton}
+          >
+            <ThemedText style={styles.modalTitle}>
+              Pembayaran lanjut di whatsapp
+            </ThemedText>
+          </TouchableOpacity>            
             <ThemedText style={styles.modalTitle}>Berikan Testimonial</ThemedText>
-            
             <ThemedView style={styles.ratingContainer}>
               {[1, 2, 3, 4, 5].map((star) => (
                 <TouchableOpacity
@@ -537,6 +549,12 @@ const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 400,
   },
+  whatsappButton: {
+      backgroundColor: '#25D366', // Warna hijau WhatsApp
+      padding: 15,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',

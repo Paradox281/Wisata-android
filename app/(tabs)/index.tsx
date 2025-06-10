@@ -105,7 +105,7 @@ export default function DashboardScreen() {
   };
 
   const handleSeeAllOffers = () => {
-    router.push('/offers' as any);
+    router.push('/(tabs)/destinations' as any);
   };
 
   const handleSeeAllTestimonials = () => {
@@ -217,7 +217,7 @@ export default function DashboardScreen() {
                         Diskon {promo.persentaseDiskon}% - {promo.deskripsiDestinasi}
                       </ThemedText>
                       <ThemedText style={styles.offerPrice}>
-                        Rp {promo.hargaDiskon.toLocaleString('id-ID')}
+                      Rp {(promo.hargaAsli - promo.hargaDiskon).toLocaleString('id-ID')}
                       </ThemedText>
                     </ThemedView>
                   </TouchableOpacity>
@@ -255,7 +255,7 @@ export default function DashboardScreen() {
                         </ThemedView>
                       </ThemedView>
                       <ThemedText style={styles.destinationPrice}>
-                        Rp {(destination.hargaDiskon || destination.price).toLocaleString('id-ID')}
+                        Rp {(destination.price - destination.hargaDiskon).toLocaleString('id-ID')}
                       </ThemedText>
                     </ThemedView>
                   </TouchableOpacity>

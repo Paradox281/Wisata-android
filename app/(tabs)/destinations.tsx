@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   picker: {
-    height: 40,
+    height: 50,
     color: COLORS.text,
   },
   scrollView: {

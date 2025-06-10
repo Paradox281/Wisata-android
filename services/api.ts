@@ -3,7 +3,7 @@ import { authService } from './authService';
 
 // Menggunakan IP yang sesuai berdasarkan platform
 const API_URL = Platform.OS === 'android' 
-  ? 'http://192.168.1.5:8080/api'  // Android emulator
+  ? 'http://192.168.10.45:8080/api'  // Android emulator
   : 'http://localhost:8080/api'; // iOS simulator
 
 console.log('API URL:', API_URL);

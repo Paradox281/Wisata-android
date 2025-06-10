@@ -1,12 +1,11 @@
-import { useLocalSearchParams, Stack, router } from 'expo-router';
-import { StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useState, useEffect } from 'react';
-import React from 'react';
 import { tourService } from '@/services/tourService';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Image, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 
 // Colors extracted from Altura logo
 const COLORS = {
@@ -32,7 +31,7 @@ interface DestinationDetail {
   jumlah_orang: number;
   lokasi: string;
   itenary: string[];
-  facilities: string[];
+  facilities: Array<{ id: number; name: string } | string>;
   jumlahBooking: number;
   galleries: string[];
 }
@@ -161,7 +160,7 @@ export default function DetailScreen() {
                 
                 <ThemedView style={styles.priceRatingContainer}>
                   <ThemedText style={styles.price}>
-                    Rp {data.harga.toLocaleString('id-ID')}
+                  Rp {(data.harga - data.hargaDiskon).toLocaleString('id-ID')}
                   </ThemedText>
                 </ThemedView>
               </ThemedView>
@@ -206,7 +205,9 @@ export default function DetailScreen() {
                 {data.facilities.map((facility, index) => (
                   <ThemedView key={index} style={styles.bulletItem}>
                     <Ionicons name="checkmark-circle" size={16} color={COLORS.primary} />
-                    <ThemedText style={styles.bulletText}>{facility}</ThemedText>
+                    <ThemedText style={styles.bulletText}>
+                      {typeof facility === 'object' ? facility.name : facility}
+                    </ThemedText>
                   </ThemedView>
                 ))}
               </ThemedView>
