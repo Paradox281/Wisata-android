@@ -56,12 +56,11 @@ export default function BookingScreen() {
   const [formData, setFormData] = useState({
     total_persons: '',
     departure_date: new Date(),
-    return_date: new Date(),
     participants: [] as Participant[],
   });
 
   const [showDepartureDate, setShowDepartureDate] = useState(false);
-  const [showReturnDate, setShowReturnDate] = useState(false);
+  const [buktiPembayaran, setBuktiPembayaran] = useState<any>(null);
 
   useEffect(() => {
     fetchDestinationDetails();
@@ -91,18 +90,14 @@ export default function BookingScreen() {
     }
   }, [formData.total_persons]);
 
-  const handleDateChange = (event: any, selectedDate: Date | undefined, type: 'departure' | 'return') => {
+  const handleDateChange = (event: any, selectedDate: Date | undefined) => {
     if (selectedDate) {
       setFormData(prev => ({
         ...prev,
-        [type === 'departure' ? 'departure_date' : 'return_date']: selectedDate
+        departure_date: selectedDate
       }));
     }
-    if (type === 'departure') {
-      setShowDepartureDate(false);
-    } else {
-      setShowReturnDate(false);
-    }
+    setShowDepartureDate(false);
   };
 
   const handleParticipantChange = (index: number, field: keyof Participant, value: string) => {
@@ -125,17 +120,12 @@ export default function BookingScreen() {
       return false;
     }
 
-    if (formData.departure_date >= formData.return_date) {
-      Alert.alert('Error', 'Tanggal kembali harus setelah tanggal keberangkatan');
-      return false;
-    }
-
     return true;
   };
 
   const calculateTotalPrice = () => {
     if (!destination || !formData.total_persons) return 0;
-  const price = destination.harga - destination.hargaDiskon;
+    const price = destination.harga - (destination.hargaDiskon || 0);
     return price * parseInt(formData.total_persons);
   };
 
@@ -184,7 +174,6 @@ export default function BookingScreen() {
         total_persons: parseInt(formData.total_persons),
         status: 'PENDING',
         departure_date: formData.departure_date.toISOString(),
-        return_date: formData.return_date.toISOString(),
         participants: formData.participants.map(p => ({
           ...p,
           age: parseInt(p.age)
@@ -196,13 +185,29 @@ export default function BookingScreen() {
       console.log('Booking response:', response);
       
       Alert.alert('Sukses', 'Booking berhasil dibuat');
-      setShowTestimonialModal(true);
+      // Ambil bookingId dari response.data.payment.id jika ada
+      console.log('Response booking:', response);
+      const bookingId = response?.data?.bookingId;
+      console.log('Booking ID yang dikirim ke payment:', bookingId);
+      if (!bookingId) {
+        Alert.alert('Error', 'Booking ID tidak ditemukan.');
+        return;
+      }
+      router.replace({ pathname: '/payment', params: { bookingId: String(bookingId) } });
     } catch (error) {
       console.error('Error creating booking:', error);
       Alert.alert('Error', 'Gagal membuat booking. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUploadBukti = () => {
+    Alert.alert('Info', 'Fitur upload bukti pembayaran belum tersedia.');
+  };
+
+  const handleKirimPembayaran = () => {
+    Alert.alert('Info', 'Fitur pengiriman bukti pembayaran belum tersedia.');
   };
 
   if (loading) {
@@ -232,7 +237,7 @@ export default function BookingScreen() {
                 <ThemedText style={styles.destinationLocation}>{destination?.lokasi}</ThemedText>
               </ThemedView>
               <ThemedText style={styles.destinationPrice}>
-              Rp {(destination.harga - destination.hargaDiskon).toLocaleString('id-ID')}
+                Rp {destination ? (destination.harga - (destination.hargaDiskon || 0)).toLocaleString('id-ID') : '0'}
               </ThemedText>
             </ThemedView>
           </ThemedView>
@@ -274,26 +279,7 @@ export default function BookingScreen() {
                 <DateTimePicker
                   value={formData.departure_date}
                   mode="date"
-                  onChange={(event, date) => handleDateChange(event, date, 'departure')}
-                />
-              )}
-            </ThemedView>
-
-            <ThemedView style={styles.inputContainer}>
-              <ThemedText style={styles.label}>Tanggal Kembali</ThemedText>
-              <TouchableOpacity 
-                style={styles.input}
-                onPress={() => setShowReturnDate(true)}
-              >
-                <ThemedText>
-                  {formData.return_date.toLocaleDateString('id-ID')}
-                </ThemedText>
-              </TouchableOpacity>
-              {showReturnDate && (
-                <DateTimePicker
-                  value={formData.return_date}
-                  mode="date"
-                  onChange={(event, date) => handleDateChange(event, date, 'return')}
+                  onChange={(event, date) => handleDateChange(event, date)}
                 />
               )}
             </ThemedView>
@@ -342,6 +328,8 @@ export default function BookingScreen() {
             </ThemedView>
           )}
 
+          {/* Layout Pembayaran */}
+          {/* Hapus layout pembayaran dari halaman booking, karena akan dipindahkan ke halaman payment */}
           <TouchableOpacity 
             style={[styles.submitButton, loading && styles.submitButtonDisabled]} 
             onPress={handleSubmit}
@@ -596,5 +584,28 @@ const styles = StyleSheet.create({
   skipButtonText: {
     color: COLORS.textSecondary,
     fontSize: 16,
+  },
+  uploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginTop: 12,
+  },
+  uploadButtonText: {
+    marginLeft: 8,
+    color: COLORS.primary,
+    fontSize: 16,
+  },
+  buktiImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 8,
+    marginTop: 12,
+    resizeMode: 'contain',
   },
 }); 

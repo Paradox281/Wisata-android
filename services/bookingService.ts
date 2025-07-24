@@ -7,7 +7,6 @@ interface BookingData {
   total_persons: number;
   status: string;
   departure_date: string;
-  return_date: string;
   participants: {
     name: string;
     identityNumber: string;

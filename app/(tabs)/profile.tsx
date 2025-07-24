@@ -3,7 +3,9 @@ import { ThemedView } from '@/components/ThemedView';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/services/api';
 import { Ionicons } from '@expo/vector-icons';
+import * as Print from 'expo-print';
 import { router } from 'expo-router';
+import * as Sharing from 'expo-sharing';
 import { useEffect, useState } from 'react';
 import { Alert, Image, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 
@@ -45,6 +47,18 @@ interface EditProfileData {
 interface ChangePasswordData {
   currentPassword: string;
   newPassword: string;
+}
+
+interface KwitansiData {
+  harga_asli: number;
+  user_id: number;
+  booking_date: string;
+  departure_date: string;
+  destination: string;
+  id: number;
+  harga_diskon: number;
+  status: string;
+  total_persons?: number;
 }
 
 export default function ProfileScreen() {
@@ -137,6 +151,123 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleCetakKwitansi = async (bookingId: number) => {
+    try {
+      const response = await api.get(`/kwitansi?id=${bookingId}`);
+      const kwitansiData: KwitansiData = response.data;
+
+      const hargaAsli = kwitansiData.harga_asli ?? 0;
+      const hargaDiskon = kwitansiData.harga_diskon ?? 0;
+      const totalPersons = kwitansiData.total_persons ?? 1;
+      const totalBayar = typeof kwitansiData.totalPrice === 'number'
+        ? kwitansiData.totalPrice
+        : (hargaAsli - hargaDiskon) * totalPersons;
+      const destination = kwitansiData.destination ?? '-';
+      const bookingDate = kwitansiData.booking_date ?? '';
+      const departureDate = kwitansiData.departure_date ?? '';
+      const status = kwitansiData.status ?? '-';
+      const id = kwitansiData.id ?? '-';
+
+      const htmlContent = `
+        <html>
+          <head>
+            <style>
+              body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 12px; color: #333; }
+              .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); font-size: 14px; line-height: 24px; }
+              .header { text-align: center; }
+              .header h1 { font-size: 24px; margin: 0; font-weight: bold; color: #000; }
+              .header h2 { font-size: 16px; margin: 5px 0; color: #555; }
+              .header p { font-size: 12px; margin: 2px 0; color: #555; }
+              hr { border: 0; border-top: 1px solid #ddd; margin: 20px 0; }
+              .details-section { margin-bottom: 20px; }
+              .details-section h3 { font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; }
+              .details-grid { display: flex; justify-content: space-between; flex-wrap: wrap; }
+              .details-item { width: 48%; margin-bottom: 10px; }
+              .details-item span { font-weight: bold; font-size: 15px; }
+              .biaya-section table { width: 100%; border-collapse: collapse; }
+              .biaya-section td { padding: 8px 0; }
+              .biaya-section .total td { border-top: 1px solid #ddd; padding-top: 10px; font-weight: bold; }
+              .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+              .signature-section { margin-top: 50px; display: flex; justify-content: space-between; }
+              .tanda-tangan { text-align: right; }
+              .tanda-tangan .label { margin-top: 60px; }
+            </style>
+          </head>
+          <body>
+            <div class="invoice-box">
+              <div class="header">
+                <h1>ALTURA TRAVEL</h1>
+                <h2>Laporan Booking Perjalanan</h2>
+                <p>Jl. Contoh No. 123, Jakarta Selatan</p>
+                <p>Telp: (021) 1234-5678 | Email: info@altura.com</p>
+              </div>
+              <hr>
+              <div class="details-section">
+                <h3>Detail Booking</h3>
+                <div class="details-grid">
+                  <div class="details-item">ID Booking<br><span>#${id}</span></div>
+                  <div class="details-item" style="text-align: right;">Tanggal Booking<br><span>${bookingDate ? new Date(bookingDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span></div>
+                  <div class="details-item">Nama Pelanggan<br><span>${profile?.fullname ?? '-'}</span></div>
+                  <div class="details-item" style="text-align: right;">Status<br><span style="color: #10b981;">${status}</span></div>
+                </div>
+              </div>
+              <div class="details-section">
+                <h3>Detail Perjalanan</h3>
+                <div class="details-grid">
+                  <div class="details-item">Destinasi<br><span>${destination}</span></div>
+                  <div class="details-item" style="text-align: right;">Tanggal Berangkat<br><span>${departureDate ? new Date(departureDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span></div>
+                </div>
+              </div>
+              <div class="biaya-section">
+                <h3>Rincian Biaya</h3>
+                <table cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td>Harga Asli</td>
+                    <td style="text-align: right;">Rp ${hargaAsli.toLocaleString('id-ID')}</td>
+                  </tr>
+                  <tr>
+                    <td>Diskon</td>
+                    <td style="text-align: right;">- Rp ${hargaDiskon.toLocaleString('id-ID')}</td>
+                  </tr>
+                  <tr class="total">
+                    <td>Total Bayar</td>
+                    <td style="text-align: right;">Rp ${totalBayar.toLocaleString('id-ID')}</td>
+                  </tr>
+                </table>
+              </div>
+              <hr>
+              <div class="footer">
+                <p>Terima kasih telah mempercayai Altura Travel untuk perjalanan Anda</p>
+              </div>
+              <div class="signature-section">
+                <div class="dicetak">
+                  Dicetak pada<br>
+                  <span>${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'numeric', year: 'numeric' })}</span>
+                </div>
+                <div class="tanda-tangan">
+                  Altura Travel
+                  <div class="label">( Tanda Tangan )</div>
+                </div>
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+      
+      const { uri } = await Print.printToFileAsync({ html: htmlContent });
+      await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Simpan kwitansi' });
+
+    } catch (error) {
+      console.error('Error fetching kwitansi:', error);
+      if (error instanceof Error && error.message.includes('401')) {
+        Alert.alert('Error', 'Sesi Anda telah berakhir. Silakan login kembali.');
+        router.replace('/login');
+      } else {
+        Alert.alert('Error', 'Gagal membuat file kwitansi');
+      }
+    }
+  };
+
   const getStatusGroup = (status: string) => {
     switch (status.toUpperCase()) {
       case 'PENDING':
@@ -226,6 +357,15 @@ export default function ProfileScreen() {
                           {booking.status}
                         </ThemedText>
                       </ThemedView>
+                      {booking.status.toUpperCase() === 'CONFIRMED' && (
+                        <TouchableOpacity
+                          style={styles.cetakKwitansiButton}
+                          onPress={() => handleCetakKwitansi(booking.bookingId)}
+                        >
+                          <Ionicons name="print-outline" size={16} color={COLORS.white} />
+                          <ThemedText style={styles.cetakKwitansiText}>Cetak Kwitansi</ThemedText>
+                        </TouchableOpacity>
+                      )}
                     </ThemedView>
 
                     <ThemedView style={styles.bookingDetails}>
@@ -259,9 +399,20 @@ export default function ProfileScreen() {
 
                       <ThemedView style={styles.bookingDetailItem}>
                         <Ionicons name="cash-outline" size={16} color={COLORS.textSecondary} />
-                        <ThemedText style={styles.bookingDetailText}>
-                          Total: Rp {booking.totalPrice.toLocaleString('id-ID')}
-                        </ThemedText>
+                        {booking.hargaAsli === booking.totalPrice ? (
+                          <ThemedText style={styles.bookingDetailText}>
+                            Total: Rp {booking.hargaAsli.toLocaleString('id-ID')}
+                          </ThemedText>
+                        ) : (
+                          <>
+                            <ThemedText style={styles.bookingDetailText}>
+                              Harga Asli: Rp {booking.hargaAsli.toLocaleString('id-ID')}
+                            </ThemedText>
+                            <ThemedText style={styles.bookingDetailText}>
+                              Total: Rp {booking.totalPrice.toLocaleString('id-ID')}
+                            </ThemedText>
+                          </>
+                        )}
                       </ThemedView>
                     </ThemedView>
                   </ThemedView>
@@ -271,7 +422,7 @@ export default function ProfileScreen() {
           </ThemedView>
 
           <ThemedView style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Pengaturan</ThemedText>
+            <ThemedText style={styles.sectionTitle}>Pengaturan</ThemedText>    
             <TouchableOpacity 
               style={styles.settingItem}
               onPress={() => setShowEditModal(true)}
@@ -473,6 +624,9 @@ const styles = StyleSheet.create({
   bookingHeader: {
     padding: 16,
     backgroundColor: COLORS.white,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   bookingHeaderContent: {
     flex: 1,
@@ -486,6 +640,20 @@ const styles = StyleSheet.create({
   bookingStatus: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  cetakKwitansiButton: {
+    backgroundColor: COLORS.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  cetakKwitansiText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
   },
   bookingDetails: {
     backgroundColor: COLORS.background,
@@ -528,6 +696,7 @@ const styles = StyleSheet.create({
     padding: 24,
     width: '90%',
     maxWidth: 400,
+    maxHeight: '80%',
   },
   modalTitle: {
     fontSize: 20,
@@ -564,4 +733,4 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontSize: 16,
   },
-}); 
+});

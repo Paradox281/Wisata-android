@@ -2,8 +2,8 @@ import { Platform } from 'react-native';
 import { authService } from './authService';
 
 // Menggunakan IP yang sesuai berdasarkan platform
-const API_URL = Platform.OS === 'android' 
-  ? 'http://192.168.10.45:8080/api'  // Android emulator
+export const API_URL = Platform.OS === 'android' 
+  ? 'http://192.168.1.8:8080/api'  // Android emulator
   : 'http://localhost:8080/api'; // iOS simulator
 
 console.log('API URL:', API_URL);
@@ -77,4 +77,23 @@ export const api = {
   async delete(endpoint: string, options: RequestInit = {}) {
     return this.fetch(endpoint, { ...options, method: 'DELETE' });
   },
-}; 
+};
+
+// Fungsi untuk upload multipart/form-data
+export async function postMultipart(endpoint: string, formData: FormData) {
+  const token = await authService.getToken();
+  const url = `${API_URL}${endpoint}`;
+  const headers: any = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.message || 'Gagal upload data');
+  }
+  return response.json();
+} 
