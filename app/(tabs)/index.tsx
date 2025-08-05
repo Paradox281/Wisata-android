@@ -1,11 +1,12 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useAuth } from '@/context/AuthContext';
 import { tourService } from '@/services/tourService';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Image, ImageBackground, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { Alert, Image, ImageBackground, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import Swiper from 'react-native-swiper';
 
 // Colors extracted from Altura logo
@@ -38,7 +39,7 @@ interface TourPackage {
 
 interface Destination {
   id: number;
-  name: string;
+  nama: string;
   location: string;
   imageUrl: string;
   description: string;
@@ -60,10 +61,12 @@ interface Testimonial {
 }
 
 export default function DashboardScreen() {
+  const { logout } = useAuth();
   const [promoPackages, setPromoPackages] = useState<TourPackage[]>([]);
   const [topDestinations, setTopDestinations] = useState<Destination[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -87,6 +90,15 @@ export default function DashboardScreen() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.replace('/login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      Alert.alert('Error', 'Gagal keluar');
+    }
+  };
   // Navigation handlers
   const handleDestinationPress = (id: number) => {
     router.push(`/detail/${id}`);
@@ -149,9 +161,22 @@ export default function DashboardScreen() {
       >
         <ThemedView style={styles.header}>
           <ThemedText style={styles.headerTitle}>Altura Travel</ThemedText>
-          <TouchableOpacity style={styles.profileButton}>
-            <Ionicons name="person-circle-outline" size={28} color={COLORS.primary} />
-          </TouchableOpacity>
+          <ThemedView style={{ position: 'relative' }}>
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={() => setShowDropdown(!showDropdown)}
+            >
+              <Ionicons name="person-circle-outline" size={28} color={COLORS.primary} />
+            </TouchableOpacity>
+
+            {showDropdown && (
+              <ThemedView style={styles.dropdownMenu}>
+                <TouchableOpacity onPress={handleLogout} style={styles.dropdownItem}>
+                  <ThemedText style={styles.dropdownText}>Logout</ThemedText>
+                </TouchableOpacity>
+              </ThemedView>
+            )}
+          </ThemedView>
         </ThemedView>
 
         <ScrollView 
@@ -247,7 +272,7 @@ export default function DashboardScreen() {
                   >
                     <Image source={{ uri: destination.imageUrl }} style={styles.destinationImage} />
                     <ThemedView style={styles.destinationContent}>
-                      <ThemedText style={styles.destinationName}>{destination.name}</ThemedText>
+                      <ThemedText style={styles.destinationName}>{destination.nama}</ThemedText>
                       <ThemedView style={styles.destinationDetails}>
                         <ThemedView style={styles.locationContainer}>
                           <Ionicons name="location-outline" size={14} color={COLORS.textSecondary} />
@@ -255,7 +280,7 @@ export default function DashboardScreen() {
                         </ThemedView>
                       </ThemedView>
                       <ThemedText style={styles.destinationPrice}>
-                        Rp {(destination.price - destination.hargaDiskon).toLocaleString('id-ID')}
+                        Rp {(destination.price - (destination.hargaDiskon || 0)).toLocaleString('id-ID')}
                       </ThemedText>
                     </ThemedView>
                   </TouchableOpacity>
@@ -324,7 +349,34 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   },
   profileButton: {
-    padding: 5,
+    padding: 4,
+    borderRadius: 20,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 40,
+    right: 0,
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 100,
+    minWidth: 120,
+  },
+  dropdownItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  dropdownText: {
+    color: COLORS.text,
+    fontSize: 16,
   },
   scrollView: {
     flex: 1,

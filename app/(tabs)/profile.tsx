@@ -384,13 +384,6 @@ export default function ProfileScreen() {
                       </ThemedView>
 
                       <ThemedView style={styles.bookingDetailItem}>
-                        <Ionicons name="return-up-back-outline" size={16} color={COLORS.textSecondary} />
-                        <ThemedText style={styles.bookingDetailText}>
-                          Kembali: {new Date(booking.returnDate).toLocaleDateString('id-ID')}
-                        </ThemedText>
-                      </ThemedView>
-
-                      <ThemedView style={styles.bookingDetailItem}>
                         <Ionicons name="people-outline" size={16} color={COLORS.textSecondary} />
                         <ThemedText style={styles.bookingDetailText}>
                           Jumlah Orang: {booking.totalPersons}
@@ -409,7 +402,7 @@ export default function ProfileScreen() {
                               Harga Asli: Rp {booking.hargaAsli.toLocaleString('id-ID')}
                             </ThemedText>
                             <ThemedText style={styles.bookingDetailText}>
-                              Total: Rp {booking.totalPrice.toLocaleString('id-ID')}
+                              Total: Rp {(booking.hargaAsli - booking.totalPrice).toLocaleString('id-ID')}
                             </ThemedText>
                           </>
                         )}

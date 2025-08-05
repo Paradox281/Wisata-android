@@ -115,6 +115,13 @@ export default function BookingScreen() {
       return false;
     }
 
+    // Validasi kapasitas
+    const totalPersons = parseInt(formData.total_persons);
+    if (destination && totalPersons > destination.jumlah_orang) {
+      Alert.alert('Error', `Kapasitas maksimal adalah ${destination.jumlah_orang} orang`);
+      return false;
+    }
+
     if (formData.participants.some(p => !p.name || !p.identityNumber || !p.age)) {
       Alert.alert('Error', 'Semua data peserta harus diisi');
       return false;
@@ -168,14 +175,20 @@ export default function BookingScreen() {
       }
 
       setLoading(true);
+      
+      // Hapus check capacity sementara karena backend sudah menangani validasi kapasitas
+      // dan endpoint check-capacity mungkin belum tersedia di backend
+
       const bookingData = {
         package_id: destination?.id || parseInt(id as string),
         user_id: user.id,
         total_persons: parseInt(formData.total_persons),
         status: 'PENDING',
         departure_date: formData.departure_date.toISOString(),
+        return_date: formData.departure_date.toISOString(),
         participants: formData.participants.map(p => ({
-          ...p,
+          name: p.name,
+          identityNumber: p.identityNumber,
           age: parseInt(p.age)
         }))
       };
@@ -196,7 +209,25 @@ export default function BookingScreen() {
       router.replace({ pathname: '/payment', params: { bookingId: String(bookingId) } });
     } catch (error) {
       console.error('Error creating booking:', error);
-      Alert.alert('Error', 'Gagal membuat booking. Silakan coba lagi.');
+      
+      // Handle specific error messages from backend
+      if (error instanceof Error) {
+        console.log('Error message:', error.message);
+        if (error.message.includes('401')) {
+          Alert.alert('Error', 'Sesi Anda telah berakhir. Silakan login kembali.');
+          router.replace('/login');
+        } else if (error.message.includes('Kapasitas tidak cukup')) {
+          Alert.alert('Error', 'Kapasitas tidak cukup untuk jumlah peserta yang diminta');
+        } else if (error.message.includes('HTTP error! status: 400')) {
+          Alert.alert('Error', 'Data booking tidak valid. Silakan periksa kembali.');
+        } else if (error.message.includes('HTTP error! status: 500')) {
+          Alert.alert('Error', 'Terjadi kesalahan server. Silakan coba lagi nanti.');
+        } else {
+          Alert.alert('Error', 'Gagal membuat booking. Silakan coba lagi.');
+        }
+      } else {
+        Alert.alert('Error', 'Gagal membuat booking. Silakan coba lagi.');
+      }
     } finally {
       setLoading(false);
     }
@@ -254,6 +285,17 @@ export default function BookingScreen() {
                 placeholder="Masukkan jumlah orang"
                 keyboardType="numeric"
               />
+              {destination && (
+                <ThemedText style={[
+                  styles.capacityInfo,
+                  formData.total_persons && parseInt(formData.total_persons) > destination.jumlah_orang && styles.capacityError
+                ]}>
+                  Kapasitas tersedia: {destination.jumlah_orang} orang
+                  {formData.total_persons && parseInt(formData.total_persons) > destination.jumlah_orang && 
+                    ` (Melebihi kapasitas maksimal)`
+                  }
+                </ThemedText>
+              )}
             </ThemedView>
 
             <ThemedView style={styles.inputContainer}>
@@ -510,6 +552,16 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: COLORS.white,
     fontSize: 18,
+    fontWeight: 'bold',
+  },
+  capacityInfo: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  capacityError: {
+    color: '#e74c3c',
     fontWeight: 'bold',
   },
   totalPriceContainer: {

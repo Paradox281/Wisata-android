@@ -1,13 +1,14 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { api } from '@/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import * as Clipboard from 'expo-clipboard';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Alert, Image, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, Image, Modal, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { API_URL } from '../services/api';
 import { authService } from '../services/authService'; // pastikan path sesuai
 
@@ -39,6 +40,9 @@ export default function PaymentScreen() {
   const [selectedBank, setSelectedBank] = useState('BNI');
   const [buktiPembayaran, setBuktiPembayaran] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [showTestimonial, setShowTestimonial] = useState(false);
+  const [testimonial, setTestimonial] = useState('');
+  const [rating, setRating] = useState(0);
 
   const rekening = bankList.find(b => b.value === selectedBank)?.rekening || '';
 
@@ -103,7 +107,7 @@ export default function PaymentScreen() {
         type: buktiPembayaran.mimeType || 'image/jpeg', // PENTING: harus mime type, bukan 'image'
       });
       const endpoint = `${API_URL}/payments?bookingId=${bookingId}&namaBank=${selectedBank}`;
-      console.log('Kirim payment:', {
+      console.warn('Kirim payment:', {
         uri: fileUri,
         name: buktiPembayaran.fileName || buktiPembayaran.name || 'bukti.jpg',
         type: buktiPembayaran.type || 'image/jpeg',
@@ -123,22 +127,57 @@ export default function PaymentScreen() {
       } catch (e) {
         data = null;
       }
-      console.log('Response status:', response.status);
-      console.log('Response data:', data);
+      console.warn('Response status:', response.status);
+      console.warn('Response data:', data);
       if (response.ok && data && data.status === 'success') {
-        Alert.alert('Sukses', 'Pembayaran berhasil dikirim');
-        router.push('/(tabs)/profile');
+        console.warn('Payment successful, calling handlePaymentSuccess');
+        Alert.alert('Sukses', 'Pembayaran berhasil dikirim', [
+          {
+            text: 'OK',
+            onPress: () => {
+              console.warn('Alert OK pressed, showing testimonial modal');
+              setTimeout(() => {
+                setShowTestimonial(true);
+              }, 500); // Delay 500ms untuk memastikan alert sudah ditutup
+            }
+          }
+        ]);
       } else {
         Alert.alert('Gagal', data?.message || 'Terjadi kesalahan saat mengirim pembayaran');
       }
     } catch (error) {
-      console.error('API Error:', error, JSON.stringify(error), error.stack);
+      console.error('API Error:', error instanceof Error ? error.message : String(error));
       Alert.alert('Gagal', 'Terjadi kesalahan saat mengirim pembayaran');
     } finally {
       setLoading(false);
     }
   };
 
+  // Debug: log state showTestimonial
+  useEffect(() => {
+    console.warn('showTestimonial state changed to:', showTestimonial);
+  }, [showTestimonial]);
+
+  const handleSubmitTestimonial = async () => {
+    try {
+      if (!testimonial || rating === 0) {
+        Alert.alert('Error', 'Mohon isi testimonial dan rating');
+        return;
+      }
+      await api.post('/testimonials', {
+        testimonial,
+        rating
+      });
+      Alert.alert('Sukses', 'Terima kasih atas testimonial Anda');
+      setShowTestimonial(false);
+      router.push('/(tabs)/profile');
+    } catch (error) {
+      console.error('Error submitting testimonial:', error);
+      Alert.alert('Error', 'Gagal mengirim testimonial. Silakan coba lagi.');
+    }
+  };
+
+  // Komponen Modal
   return (
     <ThemedView style={styles.container}>
       <ThemedText style={styles.sectionTitle}>Pembayaran</ThemedText>
@@ -187,6 +226,56 @@ export default function PaymentScreen() {
       <TouchableOpacity style={styles.submitButton} onPress={handleKirimPembayaran} disabled={loading}>
         <ThemedText style={styles.submitButtonText}>{loading ? 'Mengirim...' : 'Kirim'}</ThemedText>
       </TouchableOpacity>
+
+      {/* Tombol test untuk debugging */}
+      <TouchableOpacity 
+        style={[styles.submitButton, { marginTop: 10, backgroundColor: COLORS.accent }]} 
+        onPress={() => setShowTestimonial(true)}
+      >
+        <ThemedText style={styles.submitButtonText}>Test Modal Testimonial</ThemedText>
+      </TouchableOpacity>
+
+      {/* Komponen Modal */}
+      <Modal
+        visible={showTestimonial}
+        transparent
+        animationType="slide"
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowTestimonial(false)}
+        >
+          <TouchableOpacity 
+            style={styles.modalContent}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <ThemedText style={styles.modalTitle}>Berikan Testimonial</ThemedText>
+            <View style={styles.ratingContainer}>
+              {[1,2,3,4,5].map((star) => (
+                <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                  <Ionicons name={star <= rating ? 'star' : 'star-outline'} size={32} color={COLORS.accent} />
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TextInput
+              style={styles.testimonialInput}
+              placeholder="Tulis testimonial Anda..."
+              multiline
+              numberOfLines={4}
+              value={testimonial}
+              onChangeText={setTestimonial}
+            />
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmitTestimonial}>
+              <ThemedText style={styles.submitButtonText}>Kirim Testimonial</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.skipButton} onPress={() => setShowTestimonial(false)}>
+              <ThemedText style={styles.skipButtonText}>Lewati</ThemedText>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </ThemedView>
   );
 }
@@ -263,5 +352,49 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: COLORS.border,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 24,
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.text,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  testimonialInput: {
+    backgroundColor: COLORS.background,
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 16,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  skipButton: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  skipButtonText: {
+    color: COLORS.textSecondary,
+    fontSize: 16,
   },
 }); 

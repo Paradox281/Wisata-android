@@ -3,8 +3,8 @@ import { authService } from './authService';
 
 // Menggunakan IP yang sesuai berdasarkan platform
 export const API_URL = Platform.OS === 'android' 
-  ? 'http://192.168.1.8:8080/api'  // Android emulator
-  : 'http://localhost:8080/api'; // iOS simulator
+  ? 'https://altura.up.railway.app/api'  // Android emulator
+  : 'https://altura.up.railway.app/api'; // iOS simulator
 
 console.log('API URL:', API_URL);
 

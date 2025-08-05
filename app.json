@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "altura-android",
+    "name": "Altura Tour",
     "slug": "altura-android",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "alturaandroid",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -12,12 +12,16 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.kharisma.altura",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "permissions": ["INTERNET"]
+      "permissions": [
+        "INTERNET"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -38,6 +42,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "cd3d4fd6-758c-4cc3-a4a2-9520f641c02a"
+      }
     }
   }
 }
