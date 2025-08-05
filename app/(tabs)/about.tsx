@@ -1,7 +1,7 @@
-import { StyleSheet, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Ionicons } from '@expo/vector-icons';
+import { ScrollView, StyleSheet } from 'react-native';
 
 const COLORS = {
   primary: '#6366f1',
@@ -58,21 +58,18 @@ export default function AboutScreen() {
               <Ionicons name="star" size={16} color={COLORS.primary} />
               <ThemedText style={styles.bulletText}>Harga transparan dan kompetitif</ThemedText>
             </ThemedView>
-            <ThemedView style={styles.bulletItem}>
-              <Ionicons name="star" size={16} color={COLORS.primary} />
-              <ThemedText style={styles.bulletText}>Garansi uang kembali 100%</ThemedText>
-            </ThemedView>
+            
           </ThemedView>
 
           <ThemedView style={styles.section}>
             <ThemedText style={styles.sectionTitle}>Kontak Kami</ThemedText>
             <ThemedView style={styles.contactItem}>
               <Ionicons name="location" size={20} color={COLORS.primary} />
-              <ThemedText style={styles.contactText}>Jl. Sudirman No. 123, Jakarta Pusat</ThemedText>
+              <ThemedText style={styles.contactText}>Jl. Sudirman No. 123, Payakumbuh</ThemedText>
             </ThemedView>
             <ThemedView style={styles.contactItem}>
               <Ionicons name="call" size={20} color={COLORS.primary} />
-              <ThemedText style={styles.contactText}>+62 21 1234 5678</ThemedText>
+              <ThemedText style={styles.contactText}>+62 22 8733 8654</ThemedText>
             </ThemedView>
             <ThemedView style={styles.contactItem}>
               <Ionicons name="mail" size={20} color={COLORS.primary} />

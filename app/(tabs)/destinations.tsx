@@ -171,9 +171,21 @@ export default function DestinationsScreen() {
                       <ThemedText style={styles.destinationLocation}>{destination.location}</ThemedText>
                     </ThemedView>
                   </ThemedView>
-                  <ThemedText style={styles.destinationPrice}>
-                    Rp {(destination.hargaDiskon || destination.price).toLocaleString('id-ID')}
-                  </ThemedText>
+                  <ThemedView style={{ marginTop: 'auto' }}>
+                    <ThemedText style={[styles.destinationPrice, { color: '#2563eb', fontSize: 18, fontWeight: 'bold' }]}> 
+                      Rp {(destination.price - (destination.hargaDiskon || 0)).toLocaleString('id-ID')}
+                    </ThemedText>
+                    {destination.hargaDiskon > 0 && (
+                      <ThemedView style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                        <ThemedText style={{ textDecorationLine: 'line-through', color: '#888', fontSize: 14 }}>
+                          Rp {destination.price.toLocaleString('id-ID')}
+                        </ThemedText>
+                        <ThemedText style={{ color: 'green', fontWeight: 'bold', fontSize: 14, marginLeft: 8 }}>
+                          Hemat Rp {destination.hargaDiskon.toLocaleString('id-ID')}!
+                        </ThemedText>
+                      </ThemedView>
+                    )}
+                  </ThemedView>
                 </ThemedView>
               </TouchableOpacity>
             ))}
@@ -256,6 +268,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
   },
   destinationImage: {
     width: '100%',
@@ -264,6 +278,8 @@ const styles = StyleSheet.create({
   },
   destinationContent: {
     padding: 16,
+    flex: 1,
+    flexDirection: 'column',
   },
   destinationName: {
     fontSize: 18,

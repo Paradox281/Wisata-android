@@ -25,8 +25,8 @@ const COLORS = {
 };
 
 const bankList = [
-  { label: 'Bank BCA', value: 'BCA', rekening: '1234567890' },
-  { label: 'Bank Mandiri', value: 'MANDIRI', rekening: '9876543210' },
+  { label: 'Bank BCA', value: 'BCA', rekening: '6145337902' },
+  { label: 'Bank Mandiri', value: 'MANDIRI', rekening: '1110023914902' },
   { label: 'Bank BRI', value: 'BRI', rekening: '1122334455' },
   { label: 'Bank BNI', value: 'BNI', rekening: '5566778899' },
 ];

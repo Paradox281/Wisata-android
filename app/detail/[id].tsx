@@ -34,6 +34,7 @@ interface DestinationDetail {
   facilities: Array<{ id: number; name: string } | string>;
   jumlahBooking: number;
   galleries: string[];
+  hargaDiskon: number; // Added hargaDiskon to the interface
 }
 
 // Render star rating
@@ -158,10 +159,23 @@ export default function DetailScreen() {
                   </ThemedView>
                 </ThemedView>
                 
-                <ThemedView style={styles.priceRatingContainer}>
-                  <ThemedText style={styles.price}>
-                  Rp {(data.harga - data.hargaDiskon).toLocaleString('id-ID')}
+                <ThemedView style={[styles.priceRatingContainer, { alignItems: 'center', marginBottom: 8 }]}> 
+                  {/* Harga setelah diskon, besar dan biru */}
+                  <ThemedText style={{ color: '#2563eb', fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 2 }}>
+                    Rp {(data.harga - data.hargaDiskon).toLocaleString('id-ID')}
                   </ThemedText>
+                  {/* Harga asli dicoret, kecil, abu-abu, tepat di bawah harga diskon */}
+                  {data.hargaDiskon > 0 && (
+                    <ThemedText style={{ textDecorationLine: 'line-through', color: '#888', fontSize: 16, textAlign: 'center', marginBottom: 2, marginTop: 0 }}>
+                      Rp {data.harga.toLocaleString('id-ID')}
+                    </ThemedText>
+                  )}
+                  {/* Hemat sekian, hijau, tepat di bawah harga asli */}
+                  {data.hargaDiskon > 0 && (
+                    <ThemedText style={{ color: 'green', fontWeight: 'bold', fontSize: 15, textAlign: 'center', marginTop: 0 }}>
+                      Hemat Rp {data.hargaDiskon.toLocaleString('id-ID')}!
+                    </ThemedText>
+                  )}
                 </ThemedView>
               </ThemedView>
 
@@ -287,9 +301,8 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   priceRatingContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
     marginBottom: 16,
   },
   price: {

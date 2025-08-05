@@ -74,14 +74,26 @@ export default function DashboardScreen() {
 
   const fetchData = async () => {
     try {
-      const [promos, destinations, testimonialData] = await Promise.all([
-        tourService.getPromoPackages(),
-        tourService.getTopDestinations(),
-        tourService.getTestimonials()
-      ]);
-
+      const promos = await tourService.getPromoPackages();
+      // Mapping promoPackages ke struktur Destination
+      const mappedDestinations = promos.map((item) => ({
+        id: item.idDestinasi,
+        nama: item.namaDestinasi,
+        location: item.lokasiDestinasi,
+        imageUrl: item.gambarDestinasi,
+        description: item.deskripsiDestinasi,
+        price: item.hargaAsli,
+        quota: 0, // default jika tidak ada di API
+        itenary: [], // default jika tidak ada di API
+        jumlahBooking: item.jumlahBooking,
+        hargaDiskon: item.hargaDiskon,
+        persentaseDiskon: item.persentaseDiskon,
+        promoId: item.promoId,
+      }));
+      setTopDestinations(mappedDestinations);
       setPromoPackages(promos);
-      setTopDestinations(destinations);
+      // Jika ingin tetap ambil testimonials
+      const testimonialData = await tourService.getTestimonials();
       setTestimonials(testimonialData);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -242,8 +254,18 @@ export default function DashboardScreen() {
                         Diskon {promo.persentaseDiskon}% - {promo.deskripsiDestinasi}
                       </ThemedText>
                       <ThemedText style={styles.offerPrice}>
-                      Rp {(promo.hargaAsli - promo.hargaDiskon).toLocaleString('id-ID')}
+                        Rp {(promo.hargaAsli - promo.hargaDiskon).toLocaleString('id-ID')}
                       </ThemedText>
+                      {promo.hargaDiskon > 0 && (
+                        <ThemedView style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                          <ThemedText style={{ textDecorationLine: 'line-through', color: '#888', fontSize: 14 }}>
+                            Rp {promo.hargaAsli.toLocaleString('id-ID')}
+                          </ThemedText>
+                          <ThemedText style={{ color: 'green', fontWeight: 'bold', fontSize: 14, marginLeft: 8 }}>
+                            Hemat Rp {promo.hargaDiskon.toLocaleString('id-ID')}!
+                          </ThemedText>
+                        </ThemedView>
+                      )}
                     </ThemedView>
                   </TouchableOpacity>
                 ))}
@@ -282,6 +304,16 @@ export default function DashboardScreen() {
                       <ThemedText style={styles.destinationPrice}>
                         Rp {(destination.price - (destination.hargaDiskon || 0)).toLocaleString('id-ID')}
                       </ThemedText>
+                      {destination.hargaDiskon > 0 && (
+                        <ThemedView style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                          <ThemedText style={{ textDecorationLine: 'line-through', color: '#888', fontSize: 14 }}>
+                            Rp {destination.price.toLocaleString('id-ID')}
+                          </ThemedText>
+                          <ThemedText style={{ color: 'green', fontWeight: 'bold', fontSize: 14, marginLeft: 8 }}>
+                            Hemat Rp {destination.hargaDiskon.toLocaleString('id-ID')}!
+                          </ThemedText>
+                        </ThemedView>
+                      )}
                     </ThemedView>
                   </TouchableOpacity>
                 ))}
